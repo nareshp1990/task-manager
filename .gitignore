@@ -7,18 +7,58 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Dependency directories
+node_modules/
+jspm_packages/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Build outputs
+dist/
+dist-ssr/
+build/
+out/
+
+# Vite cache
+.vite/
+
+# ES Lint cache
+.eslintcache
+
+# Environment variables & secrets (sensitive info)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+*.pem
+*.key
+*.cert
+secrets/
+credentials/
+config/local.json
+config/secrets.json
+
+# macOS OS-specific files (sensitive cache & layout)
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows OS-specific files
+Desktop.ini
+
+# IDEs and editors
+.idea/
+.vscode/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.swo
+*.swp
+*.sublime-project
+*.sublime-workspace
