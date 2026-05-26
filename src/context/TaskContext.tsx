@@ -270,7 +270,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Google Drive Helper API Calls
   const findBackupFile = async (token: string): Promise<string | null> => {
     const response = await fetch(
-      'https://www.googleapis.com/drive/v3/files?spaces=appdata&q=name="zentask_db.json" and trashed=false&fields=files(id)',
+      'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name="zentask_db.json" and trashed=false&fields=files(id)',
       {
         headers: { Authorization: `Bearer ${token}` }
       }

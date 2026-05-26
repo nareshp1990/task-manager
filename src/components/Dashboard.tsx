@@ -29,7 +29,7 @@ export const Dashboard: React.FC = () => {
   }).filter((c) => c.total > 0); // Only display active categories with tasks
 
   return (
-    <div className="dashboard-sidebar">
+    <div className="dashboard-inner">
       {/* Brand Header */}
       <div className="logo-container">
         <div className="logo-icon">
