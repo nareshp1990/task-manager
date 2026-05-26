@@ -808,7 +808,12 @@ body {
 }
 
 .task-card.completed {
-  opacity: 0.75;
+  opacity: 0.7;
+}
+
+.task-card.completed::before {
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
 }
 
 .task-card-summary {
@@ -893,7 +898,6 @@ body {
 }
 
 .task-card.completed .task-item-title {
-  text-decoration: line-through;
   color: var(--text-muted);
 }
 
@@ -1008,8 +1012,8 @@ body {
 }
 
 .subtask-checklist-item.completed {
-  text-decoration: line-through;
   color: var(--text-muted);
+  opacity: 0.8;
 }
 
 .subtask-mini-checkbox {
@@ -1295,7 +1299,6 @@ body {
 }
 
 .weekly-task-card.completed .weekly-task-title {
-  text-decoration: line-through;
   color: var(--text-muted);
 }
 
