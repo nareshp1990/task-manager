@@ -1326,3 +1326,135 @@ body {
   color: var(--text-primary);
   border-style: solid;
 }
+
+/* Google Drive Sync Panel Styling */
+.sync-panel {
+  padding: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.sync-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.sync-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.sync-badge.syncing {
+  background: rgba(99, 102, 241, 0.15);
+  color: #6366f1;
+}
+
+.sync-badge.success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.sync-badge.error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.sync-badge.connected {
+  background: rgba(79, 70, 229, 0.15);
+  color: #4f46e5;
+}
+
+.sync-connected-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.client-id-preview {
+  font-family: monospace;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-card);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  margin-top: 0.15rem;
+  word-break: break-all;
+  font-size: 0.75rem;
+}
+
+[data-theme='light'] .client-id-preview {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.sync-disconnected-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sync-guide-wrapper {
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--border-card);
+  padding-top: 0.5rem;
+}
+
+.sync-guide-toggle {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  width: 100%;
+}
+
+.sync-guide-toggle:hover {
+  color: var(--text-primary);
+}
+
+.sync-guide-content {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  background: rgba(255, 255, 255, 0.01);
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+[data-theme='light'] .sync-guide-content {
+  background: rgba(0, 0, 0, 0.01);
+}
+
+.sync-guide-content ol {
+  padding-left: 1rem;
+}
+
+.sync-guide-content li {
+  margin-bottom: 0.25rem;
+}
+
+.sync-guide-content ul {
+  padding-left: 0.75rem;
+  list-style-type: disc;
+}
+
+.spin-icon {
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+

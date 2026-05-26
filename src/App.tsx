@@ -7,6 +7,7 @@ import { TaskList } from './components/TaskList';
 import { WeeklyPlanner } from './components/WeeklyPlanner';
 import { TaskForm } from './components/TaskForm';
 import { ImportExport } from './components/ImportExport';
+import { GDriveSync } from './components/GDriveSync';
 import { Sun, Moon, Volume2, VolumeX, Plus, Trash2, CheckCircle2, LayoutList, Calendar } from 'lucide-react';
 
 const AppContent: React.FC = () => {
@@ -67,6 +68,7 @@ const AppContent: React.FC = () => {
         <div className="glass-panel" style={{ padding: '1.25rem' }}>
           <ImportExport />
         </div>
+        <GDriveSync />
       </aside>
 
       {/* Main Task List Area */}
