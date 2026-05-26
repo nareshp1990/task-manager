@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTasks } from '../context/TaskContext';
 import type { Task, Priority, SubTask } from '../context/TaskContext';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { X, Plus, Trash2, RefreshCw } from 'lucide-react';
 
 interface TaskFormProps {
   isOpen: boolean;
@@ -11,7 +11,7 @@ interface TaskFormProps {
 }
 
 export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, taskToEdit, defaultDueDate }) => {
-  const { categories, addTask, updateTask, addCategory } = useTasks();
+  const { categories, addTask, updateTask, addCategory, geminiApiKey, generateAiTask, generateSubtasks } = useTasks();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -25,6 +25,12 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, taskToEdit,
   // Subtasks building state
   const [subtaskInput, setSubtaskInput] = useState('');
   const [subtasks, setSubtasks] = useState<SubTask[]>([]);
+
+  // AI drafting states
+  const [aiInput, setAiInput] = useState('');
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [isAiChecklistGenerating, setIsAiChecklistGenerating] = useState(false);
+  const [aiError, setAiError] = useState('');
 
   // Previous props for synchronization
   const [prevTaskToEdit, setPrevTaskToEdit] = useState<Task | null>(null);
@@ -65,6 +71,82 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, taskToEdit,
       }
     }
   }
+
+  const handleAiGenerateTask = async () => {
+    const input = aiInput.trim();
+    if (!input) return;
+
+    setIsAiGenerating(true);
+    setAiError('');
+
+    try {
+      const generated = await generateAiTask(input);
+      
+      setTitle(generated.title || '');
+      setDescription(generated.description || '');
+      setPriority((generated.priority as Priority) || 'medium');
+      
+      // Handle category inline save if it doesn't exist
+      if (generated.category) {
+        const catTrimmed = generated.category.trim();
+        if (catTrimmed) {
+          if (!categories.some(c => c.toLowerCase() === catTrimmed.toLowerCase())) {
+            addCategory(catTrimmed);
+          }
+          setCategory(catTrimmed);
+        }
+      }
+      
+      if (generated.dueDate) {
+        setDueDate(generated.dueDate);
+      }
+      
+      if (Array.isArray(generated.subtasks)) {
+        const parsedSubs: SubTask[] = generated.subtasks.map((titleStr: string, idx: number) => ({
+          id: Date.now().toString() + idx + Math.random().toString(36).substr(2, 5),
+          title: titleStr,
+          completed: false
+        }));
+        setSubtasks(parsedSubs);
+      }
+      
+      setAiInput('');
+    } catch (err) {
+      console.error(err);
+      const errorObj = err as Error;
+      setAiError(errorObj.message || 'AI Generation failed.');
+    } finally {
+      setIsAiGenerating(false);
+    }
+  };
+
+  const handleAiGenerateSubtasks = async () => {
+    if (!title.trim()) {
+      setAiError('Please enter a task title first so the AI knows what to break down.');
+      return;
+    }
+
+    setIsAiChecklistGenerating(true);
+    setAiError('');
+
+    try {
+      const generatedList = await generateSubtasks(title, description);
+      
+      const parsedSubs: SubTask[] = generatedList.map((titleStr: string, idx: number) => ({
+        id: Date.now().toString() + idx + Math.random().toString(36).substr(2, 5),
+        title: titleStr,
+        completed: false
+      }));
+      
+      setSubtasks((prev) => [...prev, ...parsedSubs]);
+    } catch (err) {
+      console.error(err);
+      const errorObj = err as Error;
+      setAiError(errorObj.message || 'AI Subtask generation failed.');
+    } finally {
+      setIsAiChecklistGenerating(false);
+    }
+  };
 
   const handleAddSubtask = () => {
     const trimmed = subtaskInput.trim();
@@ -128,6 +210,40 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, taskToEdit,
         </div>
 
         <form onSubmit={handleSubmit}>
+          {/* AI Drafting Tool */}
+          {geminiApiKey && !taskToEdit && (
+            <div className="form-group ai-draft-section">
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--primary-accent)' }}>
+                <span style={{ fontSize: '1.1rem' }}>⚡</span> Draft Task with Gemini AI
+              </label>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="e.g. Schedule a design sync for Friday at 3pm..."
+                  value={aiInput}
+                  onChange={(e) => setAiInput(e.target.value)}
+                  style={{ flex: 1, fontSize: '0.85rem' }}
+                  disabled={isAiGenerating}
+                />
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleAiGenerateTask}
+                  disabled={isAiGenerating || !aiInput.trim()}
+                  style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}
+                >
+                  {isAiGenerating ? <RefreshCw size={14} className="spin-icon" /> : 'Generate'}
+                </button>
+              </div>
+              {aiError && (
+                <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '0.4rem' }}>
+                  {aiError}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Title */}
           <div className="form-group">
             <label className="form-label">Task Title *</label>
@@ -261,7 +377,33 @@ export const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, taskToEdit,
 
           {/* Subtasks Checklist Builder */}
           <div className="form-group">
-            <label className="form-label">Subtasks Checklist</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label className="form-label">Subtasks Checklist</label>
+              {geminiApiKey && title.trim() && (
+                <button
+                  type="button"
+                  onClick={handleAiGenerateSubtasks}
+                  disabled={isAiChecklistGenerating}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--primary-accent)',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem'
+                  }}
+                >
+                  {isAiChecklistGenerating ? (
+                    <RefreshCw size={10} className="spin-icon" />
+                  ) : (
+                    <span>⚡ AI Breakdown</span>
+                  )}
+                </button>
+              )}
+            </div>
             <div className="subtasks-builder">
               <div className="subtask-input-row">
                 <input

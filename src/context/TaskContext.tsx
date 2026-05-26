@@ -92,6 +92,19 @@ interface TaskContextType {
   syncWithGoogleDrive: () => Promise<void>;
   disconnectGoogleDrive: () => void;
   
+  // Gemini AI Integration
+  geminiApiKey: string;
+  setGeminiApiKey: (key: string) => void;
+  generateAiTask: (roughInput: string) => Promise<{
+    title: string;
+    description: string;
+    priority: 'high' | 'medium' | 'low';
+    category: string;
+    dueDate?: string;
+    subtasks: string[];
+  }>;
+  generateSubtasks: (title: string, description: string) => Promise<string[]>;
+  
   // Task Actions
   addTask: (task: Omit<Task, 'id' | 'createdAt' | 'modifiedAt' | 'completed'>) => void;
   updateTask: (id: string, updatedFields: Partial<Task>) => void;
@@ -168,6 +181,11 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
+  // Gemini API Key State
+  const [geminiApiKey, setGeminiApiKey] = useState<string>(() => {
+    return localStorage.getItem('zentask_gemini_api_key') || '';
+  });
+
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   // Synchronize Tasks
@@ -203,6 +221,11 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     localStorage.setItem('zentask_google_client_id', googleClientId);
   }, [googleClientId]);
+
+  // Synchronize Gemini API Key
+  useEffect(() => {
+    localStorage.setItem('zentask_gemini_api_key', geminiApiKey);
+  }, [geminiApiKey]);
 
   // Synchronize Last Synced Time
   useEffect(() => {
@@ -475,6 +498,119 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Gemini AI task generator
+  const generateAiTask = async (roughInput: string) => {
+    if (!geminiApiKey) {
+      throw new Error('Gemini API Key is not configured. Please add it in the AI Settings.');
+    }
+
+    const todayDate = new Date().toISOString().split('T')[0];
+    const todayDay = new Date().toLocaleDateString(undefined, { weekday: 'long' });
+    const availableCategories = categories.join(', ');
+
+    const prompt = `Today is: ${todayDay}, ${todayDate}
+Available task categories in the system: [${availableCategories}]
+
+User's rough task idea: "${roughInput}"
+
+Please analyze and refine this task. Output a structured JSON response matching the following schema. Make sure category matches one of the available categories if applicable, or suggest a suitable new category. Formulate 4-6 actionable subtasks to break down the task.`;
+
+    const schema = {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Refined, professional task title' },
+        description: { type: 'string', description: 'Detailed, actionable task description' },
+        priority: { type: 'string', enum: ['high', 'medium', 'low'] },
+        category: { type: 'string', description: 'Suggested category' },
+        dueDate: { type: 'string', description: 'Calculated due date in YYYY-MM-DD format, relative to the current date.' },
+        subtasks: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Actionable steps'
+        }
+      },
+      required: ['title', 'description', 'priority', 'category', 'subtasks']
+    };
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+
+    const body = {
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: schema
+      }
+    };
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => ({}));
+      const errMsg = errBody?.error?.message || response.statusText;
+      throw new Error(`Gemini API Error: ${errMsg}`);
+    }
+
+    const result = await response.json();
+    try {
+      const contentText = result.candidates[0].content.parts[0].text;
+      return JSON.parse(contentText);
+    } catch {
+      throw new Error('Failed to parse Gemini AI response.');
+    }
+  };
+
+  // Gemini AI subtask generator
+  const generateSubtasks = async (title: string, description: string) => {
+    if (!geminiApiKey) {
+      throw new Error('Gemini API Key is not configured. Please add it in the AI Settings.');
+    }
+
+    const prompt = `Task Title: "${title}"
+Task Description: "${description}"
+
+Please break down this task into 4-6 actionable, granular steps (checklists) to make it easy to complete. Return a JSON list of strings representing the steps.`;
+
+    const schema = {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'List of actionable subtasks'
+    };
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+
+    const body = {
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: schema
+      }
+    };
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => ({}));
+      const errMsg = errBody?.error?.message || response.statusText;
+      throw new Error(`Gemini API Error: ${errMsg}`);
+    }
+
+    const result = await response.json();
+    try {
+      const contentText = result.candidates[0].content.parts[0].text;
+      return JSON.parse(contentText) as string[];
+    } catch {
+      throw new Error('Failed to parse Gemini AI response.');
+    }
+  };
+
   // Sync Action
   const syncWithGoogleDrive = async () => {
     if (!googleClientId) {
@@ -655,6 +791,10 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         connectGoogleDrive,
         syncWithGoogleDrive,
         disconnectGoogleDrive,
+        geminiApiKey,
+        setGeminiApiKey,
+        generateAiTask,
+        generateSubtasks,
         addTask,
         updateTask,
         deleteTask,

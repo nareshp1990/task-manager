@@ -8,6 +8,7 @@ import { WeeklyPlanner } from './components/WeeklyPlanner';
 import { TaskForm } from './components/TaskForm';
 import { ImportExport } from './components/ImportExport';
 import { GDriveSync } from './components/GDriveSync';
+import { AISettings } from './components/AISettings';
 import { Sun, Moon, Volume2, VolumeX, Plus, Trash2, CheckCircle2, LayoutList, Calendar, Cloud, CloudOff, RefreshCw } from 'lucide-react';
 
 const AppContent: React.FC = () => {
@@ -115,6 +116,7 @@ const AppContent: React.FC = () => {
           <ImportExport />
         </div>
         <GDriveSync />
+        <AISettings />
       </aside>
 
       {/* Main Task List Area */}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTasks } from '../context/TaskContext';
 import type { Task } from '../context/TaskContext';
 import { isOverdue } from '../utils/date';
-import { Calendar, CheckSquare, Edit3, Trash2, ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { Calendar, CheckSquare, Edit3, Trash2, ChevronDown, ChevronUp, Clock, Brain, RefreshCw } from 'lucide-react';
 
 interface TaskItemProps {
   task: Task;
@@ -11,8 +11,28 @@ interface TaskItemProps {
 }
 
 export const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onConfirmDelete }) => {
-  const { toggleTaskCompletion, toggleSubtaskCompletion } = useTasks();
+  const { toggleTaskCompletion, toggleSubtaskCompletion, geminiApiKey, generateSubtasks, updateTask } = useTasks();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isAiBreakingDown, setIsAiBreakingDown] = useState(false);
+
+  const handleAiBreakdown = async () => {
+    setIsAiBreakingDown(true);
+    try {
+      const generatedList = await generateSubtasks(task.title, task.description);
+      const parsedSubs = generatedList.map((titleStr: string, idx: number) => ({
+        id: Date.now().toString() + idx + Math.random().toString(36).substr(2, 5),
+        title: titleStr,
+        completed: false
+      }));
+      updateTask(task.id, { subtasks: [...task.subtasks, ...parsedSubs] });
+    } catch (err) {
+      console.error(err);
+      const errorObj = err as Error;
+      alert('AI Breakdown failed: ' + (errorObj.message || String(err)));
+    } finally {
+      setIsAiBreakingDown(false);
+    }
+  };
 
   // Determine priority color variable
   const getPriorityColor = () => {
@@ -153,9 +173,30 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onConfirmDelet
           )}
 
           {/* Subtasks Checklist */}
-          {totalSubtasks > 0 && (
+          {totalSubtasks > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <div className="subtasks-checklist-header">Subtasks Checklist</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="subtasks-checklist-header">Subtasks Checklist</div>
+                {geminiApiKey && (
+                  <button
+                    onClick={handleAiBreakdown}
+                    disabled={isAiBreakingDown}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--primary-accent)',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.2rem'
+                    }}
+                  >
+                    {isAiBreakingDown ? <RefreshCw size={10} className="spin-icon" /> : <span>⚡ Add AI Subtasks</span>}
+                  </button>
+                )}
+              </div>
               <div className="subtasks-checklist-list">
                 {task.subtasks.map((st) => (
                   <div
@@ -171,6 +212,32 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onConfirmDelet
                 ))}
               </div>
             </div>
+          ) : (
+            geminiApiKey && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.25rem' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleAiBreakdown}
+                  disabled={isAiBreakingDown}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    fontSize: '0.8rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    width: 'fit-content'
+                  }}
+                >
+                  {isAiBreakingDown ? (
+                    <RefreshCw size={14} className="spin-icon" />
+                  ) : (
+                    <Brain size={14} style={{ color: 'var(--primary-accent)' }} />
+                  )}
+                  <span>{isAiBreakingDown ? 'Breaking down...' : 'Break down with AI'}</span>
+                </button>
+              </div>
+            )
           )}
 
           {/* Timestamp */}

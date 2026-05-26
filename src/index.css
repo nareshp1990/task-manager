@@ -1467,3 +1467,24 @@ body {
   to { transform: rotate(360deg); }
 }
 
+/* AI Drafting Section inside Drawer */
+.ai-draft-section {
+  background: rgba(99, 102, 241, 0.04);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  transition: all var(--transition-normal);
+}
+
+[data-theme='light'] .ai-draft-section {
+  background: rgba(99, 102, 241, 0.02);
+  border-color: rgba(99, 102, 241, 0.08);
+}
+
+.ai-draft-section:focus-within {
+  border-color: var(--primary-accent);
+  box-shadow: 0 0 12px var(--primary-accent-glow);
+}
+
+
