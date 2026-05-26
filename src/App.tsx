@@ -8,7 +8,7 @@ import { WeeklyPlanner } from './components/WeeklyPlanner';
 import { TaskForm } from './components/TaskForm';
 import { ImportExport } from './components/ImportExport';
 import { GDriveSync } from './components/GDriveSync';
-import { Sun, Moon, Volume2, VolumeX, Plus, Trash2, CheckCircle2, LayoutList, Calendar } from 'lucide-react';
+import { Sun, Moon, Volume2, VolumeX, Plus, Trash2, CheckCircle2, LayoutList, Calendar, Cloud, CloudOff, RefreshCw } from 'lucide-react';
 
 const AppContent: React.FC = () => {
   const {
@@ -21,6 +21,9 @@ const AppContent: React.FC = () => {
     deleteTask,
     viewMode,
     setViewMode,
+    googleClientId,
+    googleSyncStatus,
+    syncWithGoogleDrive,
   } = useTasks();
 
   // Drawer state for TaskForm
@@ -60,6 +63,49 @@ const AppContent: React.FC = () => {
     }
   };
 
+  const handleHeaderSync = () => {
+    if (!googleClientId) {
+      document.getElementById('sync-panel')?.scrollIntoView({ behavior: 'smooth' });
+      // Flash or focus the Client ID input field
+      const input = document.querySelector('.sync-disconnected-form input') as HTMLInputElement;
+      if (input) {
+        input.focus();
+        input.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.4)';
+        setTimeout(() => {
+          input.style.boxShadow = '';
+        }, 1500);
+      }
+    } else {
+      syncWithGoogleDrive();
+    }
+  };
+
+  const getHeaderSyncIcon = () => {
+    if (!googleClientId) {
+      return <CloudOff size={18} style={{ opacity: 0.5 }} />;
+    }
+    switch (googleSyncStatus) {
+      case 'syncing':
+        return <RefreshCw size={18} className="spin-icon" />;
+      case 'error':
+        return <CloudOff size={18} style={{ color: '#ef4444' }} />;
+      case 'success':
+      case 'idle':
+      default:
+        return <Cloud size={18} style={{ color: 'var(--primary-accent)' }} />;
+    }
+  };
+
+  const getHeaderSyncTitle = () => {
+    if (!googleClientId) return 'Configure Cloud Sync';
+    switch (googleSyncStatus) {
+      case 'syncing': return 'Syncing...';
+      case 'error': return 'Sync Failed. Click to retry';
+      case 'success':
+      default: return 'Cloud Synced. Click to sync';
+    }
+  };
+
   return (
     <div className="app-container">
       {/* Sidebar Panel: Dashboard Stats & Categories */}
@@ -85,6 +131,29 @@ const AppContent: React.FC = () => {
           </div>
 
           <div className="controls-group">
+            {/* Google Drive Sync Toggle */}
+            <button
+              className="btn-icon-only"
+              onClick={handleHeaderSync}
+              title={getHeaderSyncTitle()}
+              aria-label="Trigger Cloud Sync"
+              style={{ position: 'relative' }}
+            >
+              {getHeaderSyncIcon()}
+              {googleClientId && googleSyncStatus === 'success' && (
+                <span style={{
+                  position: 'absolute',
+                  top: '3px',
+                  right: '3px',
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  background: '#10b981',
+                  boxShadow: '0 0 4px #10b981'
+                }} />
+              )}
+            </button>
+
             {/* Audio Toggle */}
             <button
               className="btn-icon-only"

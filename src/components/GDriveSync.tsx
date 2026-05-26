@@ -57,7 +57,7 @@ export const GDriveSync: React.FC = () => {
   };
 
   return (
-    <div className="glass-panel sync-panel animate-fade-in">
+    <div id="sync-panel" className="glass-panel sync-panel animate-fade-in">
       <div className="sync-panel-header">
         <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.05rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
           <Cloud size={18} style={{ color: 'var(--primary-accent)' }} />

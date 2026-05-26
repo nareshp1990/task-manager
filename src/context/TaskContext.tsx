@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 
 interface GoogleAuthResponse {
   access_token: string;
@@ -128,6 +128,8 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return saved ? JSON.parse(saved) : [];
   });
 
+  const isMergingRef = useRef(false);
+
   // Filters & UI States
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -210,6 +212,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('zentask_last_synced_time');
     }
   }, [lastSyncedTime]);
+
 
   // Toast notifications manager
   const addToast = (message: string) => {
@@ -389,10 +392,14 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (!fileId) {
         // Create first backup file on cloud
+        isMergingRef.current = true;
         await createBackupFile(token, localData);
         setLastSyncedTime(new Date().toLocaleTimeString());
         setGoogleSyncStatus('success');
         addToast('Created first cloud backup');
+        setTimeout(() => {
+          isMergingRef.current = false;
+        }, 500);
         return;
       }
 
@@ -439,6 +446,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const mergedCategories = Array.from(new Set([...DEFAULT_CATEGORIES, ...categories, ...(cloudData.categories || [])]));
 
       // Update Local State
+      isMergingRef.current = true;
       setTasks(mergedTasksList);
       setCategories(mergedCategories);
       setDeletedTaskIds(combinedDeletedIds);
@@ -455,9 +463,14 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLastSyncedTime(new Date().toLocaleTimeString());
       setGoogleSyncStatus('success');
       addToast('Sync completed');
+      
+      setTimeout(() => {
+        isMergingRef.current = false;
+      }, 500);
     } catch (err) {
       console.error(err);
       setGoogleSyncStatus('error');
+      isMergingRef.current = false;
       throw err;
     }
   };
@@ -479,6 +492,17 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addToast(errorObj.message || 'Sync failed.');
     }
   };
+
+  // Auto-sync tasks to Google Drive on local changes
+  useEffect(() => {
+    if (googleClientId && !isMergingRef.current && googleSyncStatus !== 'syncing') {
+      const timer = setTimeout(() => {
+        syncWithGoogleDrive();
+      }, 3000); // 3-second debounce to batch rapid changes (like checking off subtasks)
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tasks, categories, deletedTaskIds, googleClientId]);
 
   // Actions
   const toggleTheme = () => {
