@@ -62,3 +62,6 @@ Desktop.ini
 *.swp
 *.sublime-project
 *.sublime-workspace
+
+# Antigravity CLI
+.antigravitycli/
