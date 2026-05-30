@@ -4,7 +4,7 @@ import { ClipboardList } from 'lucide-react';
 import { isOverdue } from '../utils/date';
 
 export const Dashboard: React.FC = () => {
-  const { tasks, categories } = useTasks();
+  const { tasks, categories, selectedStatus, setSelectedStatus, setViewMode } = useTasks();
 
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter((t) => t.completed).length;
@@ -27,6 +27,11 @@ export const Dashboard: React.FC = () => {
     const catPercent = catTotal > 0 ? Math.round((catCompleted / catTotal) * 100) : 0;
     return { name: cat, total: catTotal, percent: catPercent };
   }).filter((c) => c.total > 0); // Only display active categories with tasks
+
+  const handleStatClick = (status: 'all' | 'active' | 'completed' | 'overdue') => {
+    setSelectedStatus(selectedStatus === status ? 'all' : status);
+    setViewMode('list');
+  };
 
   return (
     <div className="dashboard-inner">
@@ -72,19 +77,31 @@ export const Dashboard: React.FC = () => {
 
       {/* Numerical Stats Grid */}
       <div className="stats-grid">
-        <div className="stat-card">
+        <div
+          className={`stat-card ${selectedStatus === 'all' ? 'active' : ''}`}
+          onClick={() => handleStatClick('all')}
+        >
           <div className="stat-val" style={{ color: 'var(--text-primary)' }}>{totalTasks}</div>
           <div className="stat-label">Total Tasks</div>
         </div>
-        <div className="stat-card">
+        <div
+          className={`stat-card ${selectedStatus === 'active' ? 'active' : ''}`}
+          onClick={() => handleStatClick('active')}
+        >
           <div className="stat-val" style={{ color: 'var(--primary-accent)' }}>{pendingTasks}</div>
           <div className="stat-label">Pending</div>
         </div>
-        <div className="stat-card">
+        <div
+          className={`stat-card ${selectedStatus === 'completed' ? 'active' : ''}`}
+          onClick={() => handleStatClick('completed')}
+        >
           <div className="stat-val" style={{ color: '#10b981' }}>{completedTasks}</div>
           <div className="stat-label">Completed</div>
         </div>
-        <div className="stat-card">
+        <div
+          className={`stat-card ${selectedStatus === 'overdue' ? 'active' : ''}`}
+          onClick={() => handleStatClick('overdue')}
+        >
           <div className="stat-val" style={{ color: overdueTasks > 0 ? '#ef4444' : 'var(--text-muted)' }}>
             {overdueTasks}
           </div>

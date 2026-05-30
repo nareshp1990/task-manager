@@ -23,26 +23,42 @@ export const TaskList: React.FC<TaskListProps> = ({ onEdit, onConfirmDelete, onO
     sortBy,
   } = useTasks();
 
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayKey = `${yyyy}-${mm}-${dd}`;
+
   // Apply filters
   const filteredTasks = tasks.filter((task) => {
-    // 1. Category Filter
+    // 1. Status Filter overrides the default today/current pending list view logic
+    if (selectedStatus === 'active') {
+      if (task.completed) return false;
+    } else if (selectedStatus === 'completed') {
+      if (!task.completed) return false;
+    } else if (selectedStatus === 'overdue') {
+      if (!isOverdue(task)) return false;
+    } else {
+      // selectedStatus === 'all' (Default View): Only show current or today's pending tasks
+      if (task.completed) {
+        return false;
+      }
+      if (isOverdue(task)) {
+        return false;
+      }
+      const isCurrentOrToday = !task.dueDate || task.dueDate === todayKey;
+      if (!isCurrentOrToday) {
+        return false;
+      }
+    }
+
+    // 2. Category Filter
     if (selectedCategory !== 'All' && task.category !== selectedCategory) {
       return false;
     }
 
-    // 2. Priority Filter
+    // 3. Priority Filter
     if (selectedPriority !== 'All' && task.priority !== selectedPriority) {
-      return false;
-    }
-
-    // 3. Status Filter
-    if (selectedStatus === 'active' && task.completed) {
-      return false;
-    }
-    if (selectedStatus === 'completed' && !task.completed) {
-      return false;
-    }
-    if (selectedStatus === 'overdue' && !isOverdue(task)) {
       return false;
     }
 

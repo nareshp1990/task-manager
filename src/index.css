@@ -372,6 +372,7 @@ body {
   flex-direction: column;
   gap: 0.25rem;
   transition: all var(--transition-fast);
+  cursor: pointer;
 }
 
 [data-theme='light'] .stat-card {
@@ -380,7 +381,14 @@ body {
 
 .stat-card:hover {
   background: var(--bg-card-hover);
+  border-color: rgba(99, 102, 241, 0.3);
   transform: translateY(-2px);
+}
+
+.stat-card.active {
+  background: var(--bg-card-hover);
+  border-color: var(--primary-accent);
+  box-shadow: 0 0 12px var(--primary-accent-glow);
 }
 
 .stat-val {

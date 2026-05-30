@@ -16,6 +16,7 @@ export const Filters: React.FC = () => {
     setSelectedStatus,
     sortBy,
     setSortBy,
+    viewMode,
   } = useTasks();
 
   return (
@@ -54,19 +55,21 @@ export const Filters: React.FC = () => {
         </div>
 
         {/* Status Dropdown */}
-        <div className="select-wrapper">
-          <select
-            className="select-field"
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value as StatusFilter)}
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="completed">Completed</option>
-            <option value="overdue">Overdue</option>
-          </select>
-          <ChevronDown className="select-arrow" size={16} />
-        </div>
+        {viewMode === 'weekly' && (
+          <div className="select-wrapper">
+            <select
+              className="select-field"
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value as StatusFilter)}
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+              <option value="overdue">Overdue</option>
+            </select>
+            <ChevronDown className="select-arrow" size={16} />
+          </div>
+        )}
 
         {/* Priority Dropdown */}
         <div className="select-wrapper">
